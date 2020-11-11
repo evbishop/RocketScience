@@ -28,7 +28,22 @@ public class Rocket : MonoBehaviour
 
     void Rotate()
     {
+        rb.freezeRotation = true;
         float deltaZ = -Input.GetAxis("Horizontal") * Time.deltaTime * rotationSpeed;
         transform.Rotate(new Vector3(0, 0, deltaZ));
+        rb.freezeRotation = false;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "Friendly":
+                
+                break;
+            default:
+                Destroy(gameObject);
+                break;
+        }
     }
 }
