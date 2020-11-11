@@ -2,21 +2,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
     [SerializeField] float speed = 10f, rotationSpeed = 10f;
     Rigidbody rb;
     AudioSource audioSource;
+    int currentScene;
+
+    enum State { Alive, Dying, Transcending }
+    State state = State.Alive;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+        currentScene = SceneManager.GetActiveScene().buildIndex;
     }
     void Update()
     {
-        Thrust();
-        Rotate();
+        if (state == State.Alive)
+        {
+            Thrust();
+            Rotate();
+        }
     }
 
     void Thrust()
@@ -36,14 +46,29 @@ public class Rocket : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        if (state != State.Alive) return;
         switch (collision.gameObject.tag)
         {
             case "Friendly":
-                
+                break;
+            case "Finish":
+                state = State.Transcending;
+                Invoke("LoadNextScene", 0.5f);
                 break;
             default:
-                Destroy(gameObject);
+                state = State.Dying;
+                Invoke("ReloadScene", 0.5f);
                 break;
         }
+    }
+
+    void LoadNextScene()
+    {
+        SceneManager.LoadScene(currentScene + 1);
+    }
+
+    void ReloadScene()
+    {
+        SceneManager.LoadScene(currentScene);
     }
 }
