@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 public class Rocket : MonoBehaviour
 {
     [SerializeField] float speed = 10f, rotationSpeed = 10f;
+    [SerializeField] AudioClip mainEngineAudio, successAudio, deathAudio;
+    [SerializeField] ParticleSystem engineVFX, successVFX, deathVFX;
     Rigidbody rb;
     AudioSource audioSource;
     int currentScene;
@@ -18,6 +20,8 @@ public class Rocket : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+        audioSource.clip = mainEngineAudio;
+        audioSource.Play();
         currentScene = SceneManager.GetActiveScene().buildIndex;
     }
     void Update()
@@ -27,6 +31,7 @@ public class Rocket : MonoBehaviour
             Thrust();
             Rotate();
         }
+        
     }
 
     void Thrust()
@@ -34,6 +39,8 @@ public class Rocket : MonoBehaviour
         float deltaY = Input.GetAxis("Jump") * Time.deltaTime * speed;
         audioSource.volume = Input.GetAxis("Jump");
         rb.AddRelativeForce(0, deltaY, 0);
+        if (Input.GetAxis("Jump") > 0) engineVFX.Play();
+        else engineVFX.Stop();
     }
 
     void Rotate()
@@ -53,11 +60,17 @@ public class Rocket : MonoBehaviour
                 break;
             case "Finish":
                 state = State.Transcending;
-                Invoke("LoadNextScene", 0.5f);
+                audioSource.volume = 0f;
+                AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
+                successVFX.Play();
+                Invoke("LoadNextScene", 1f);
                 break;
             default:
                 state = State.Dying;
-                Invoke("ReloadScene", 0.5f);
+                audioSource.volume = 0f;
+                AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
+                deathVFX.Play();
+                Invoke("ReloadScene", 2.5f);
                 break;
         }
     }
