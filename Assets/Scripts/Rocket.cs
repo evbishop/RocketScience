@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
-    [SerializeField] float speed = 10f, rotationSpeed = 10f;
+    [SerializeField] float speed = 10f, rotationSpeed = 10f, nextLevelDelay = 1f, restartLevelDelay = 2.5f;
     [SerializeField] AudioClip mainEngineAudio, successAudio, deathAudio;
     [SerializeField] ParticleSystem engineVFX, successVFX, deathVFX;
     Rigidbody rb;
@@ -39,7 +39,7 @@ public class Rocket : MonoBehaviour
         float deltaY = Input.GetAxis("Jump") * Time.deltaTime * speed;
         audioSource.volume = Input.GetAxis("Jump");
         rb.AddRelativeForce(0, deltaY, 0);
-        if (Input.GetAxis("Jump") > 0) engineVFX.Play();
+        if (deltaY > Mathf.Epsilon) engineVFX.Play();
         else engineVFX.Stop();
     }
 
@@ -63,14 +63,14 @@ public class Rocket : MonoBehaviour
                 audioSource.volume = 0f;
                 AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
                 successVFX.Play();
-                Invoke("LoadNextScene", 1f);
+                Invoke("LoadNextScene", nextLevelDelay);
                 break;
             default:
                 state = State.Dying;
                 audioSource.volume = 0f;
                 AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
                 deathVFX.Play();
-                Invoke("ReloadScene", 2.5f);
+                Invoke("ReloadScene", restartLevelDelay);
                 break;
         }
     }
