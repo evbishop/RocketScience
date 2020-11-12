@@ -12,10 +12,8 @@ public class Rocket : MonoBehaviour
     Rigidbody rb;
     AudioSource audioSource;
     int currentScene;
-    
 
-    enum State { Alive, Dying, Transcending }
-    State state = State.Alive;
+    bool isTransitioning = false;
     bool collisionsDisabled = false;
 
     void Start()
@@ -28,7 +26,7 @@ public class Rocket : MonoBehaviour
     }
     void Update()
     {
-        if (state == State.Alive)
+        if (!isTransitioning)
         {
             Thrust();
             Rotate();
@@ -53,15 +51,18 @@ public class Rocket : MonoBehaviour
 
     void Rotate()
     {
-        rb.freezeRotation = true;
         float deltaZ = -Input.GetAxis("Horizontal") * Time.deltaTime * rotationSpeed;
-        transform.Rotate(new Vector3(0, 0, deltaZ));
-        rb.freezeRotation = false;
+        if (deltaZ<Mathf.Epsilon || deltaZ>Mathf.Epsilon)
+        {
+            rb.freezeRotation = true;
+            transform.Rotate(new Vector3(0, 0, deltaZ));
+            rb.freezeRotation = false;
+        }
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if (state != State.Alive || collisionsDisabled) return;
+        if (isTransitioning) return;
         switch (collision.gameObject.tag)
         {
             case "Friendly":
@@ -77,7 +78,7 @@ public class Rocket : MonoBehaviour
 
     private void Transcend()
     {
-        state = State.Transcending;
+        isTransitioning = true;
         audioSource.volume = 0f;
         AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
         successVFX.Play();
@@ -86,7 +87,7 @@ public class Rocket : MonoBehaviour
 
     void Die()
     {
-        state = State.Dying;
+        isTransitioning = true;
         audioSource.volume = 0f;
         AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
         deathVFX.Play();
