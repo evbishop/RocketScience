@@ -12,9 +12,11 @@ public class Rocket : MonoBehaviour
     Rigidbody rb;
     AudioSource audioSource;
     int currentScene;
+    
 
     enum State { Alive, Dying, Transcending }
     State state = State.Alive;
+    bool collisionsDisabled = false;
 
     void Start()
     {
@@ -31,7 +33,13 @@ public class Rocket : MonoBehaviour
             Thrust();
             Rotate();
         }
-        
+        if (Debug.isDebugBuild) RespondToDebugKeys();
+    }
+
+    void RespondToDebugKeys()
+    {
+        if (Input.GetKeyDown(KeyCode.L)) LoadNextLevel();
+        else if (Input.GetKeyDown(KeyCode.C)) collisionsDisabled = !collisionsDisabled;
     }
 
     void Thrust()
@@ -53,34 +61,51 @@ public class Rocket : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (state != State.Alive) return;
+        if (state != State.Alive || collisionsDisabled) return;
         switch (collision.gameObject.tag)
         {
             case "Friendly":
                 break;
             case "Finish":
-                state = State.Transcending;
-                audioSource.volume = 0f;
-                AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
-                successVFX.Play();
-                Invoke("LoadNextScene", nextLevelDelay);
+                Transcend();
                 break;
             default:
-                state = State.Dying;
-                audioSource.volume = 0f;
-                AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
-                deathVFX.Play();
-                Invoke("ReloadScene", restartLevelDelay);
+                Die();
                 break;
         }
     }
 
-    void LoadNextScene()
+    private void Transcend()
     {
-        SceneManager.LoadScene(currentScene + 1);
+        state = State.Transcending;
+        audioSource.volume = 0f;
+        AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
+        successVFX.Play();
+        Invoke("LoadNextScene", nextLevelDelay);
     }
 
-    void ReloadScene()
+    void Die()
+    {
+        state = State.Dying;
+        audioSource.volume = 0f;
+        AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
+        deathVFX.Play();
+        Invoke("ReloadScene", restartLevelDelay);
+    }
+
+    void LoadNextLevel()
+    {
+        if (currentScene + 1 < SceneManager.sceneCountInBuildSettings)
+            SceneManager.LoadScene(currentScene + 1);
+        else LoadLevelOne();
+    }
+
+    void LoadLevelOne()
+    {
+        SceneManager.LoadScene(0);
+    }
+
+    void ReloadLevel()
     {
         SceneManager.LoadScene(currentScene);
     }
