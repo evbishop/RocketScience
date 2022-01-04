@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,13 +10,14 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem engineVFX, successVFX, deathVFX;
     AudioSource audioSource;
     Rigidbody rb;
-    GameManager gm;
     bool inTransition;
+
+    public static event Action OnLevelFinished;
+    public static event Action OnDeath;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        gm = FindObjectOfType<GameManager>();
         audioSource = GetComponent<AudioSource>();
         audioSource.volume = 0;
     }
@@ -75,7 +77,7 @@ public class Rocket : MonoBehaviour
         audioSource.volume = 0;
         AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.3f);
         successVFX.Play();
-        StartCoroutine(gm.LoadNextLevel());
+        OnLevelFinished?.Invoke();
     }
 
     void Die()
@@ -84,6 +86,6 @@ public class Rocket : MonoBehaviour
         audioSource.volume = 0f;
         AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.3f);
         deathVFX.Play();
-        StartCoroutine(gm.ReloadLevel());
+        OnDeath?.Invoke();
     }
 }

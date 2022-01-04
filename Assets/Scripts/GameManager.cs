@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,16 +11,34 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (FindObjectsOfType<Wind>().Length > 1) Destroy(gameObject);
+        if (FindObjectsOfType<GameManager>().Length > 1) Destroy(gameObject);
         else DontDestroyOnLoad(gameObject);
     }
 
     void Start()
     {
         currentScene = SceneManager.GetActiveScene().buildIndex;
+        Rocket.OnLevelFinished += HandleLevelFinished;
+        Rocket.OnDeath += HandleDeath;
     }
 
-    public IEnumerator LoadNextLevel()
+    void OnDestroy()
+    {
+        Rocket.OnLevelFinished -= HandleLevelFinished;
+        Rocket.OnDeath -= HandleDeath;
+    }
+
+    void HandleLevelFinished()
+    {
+        StartCoroutine(LoadNextLevel());
+    }
+
+    void HandleDeath()
+    {
+        StopCoroutine(ReloadLevel());
+    }
+
+    IEnumerator LoadNextLevel()
     {
         yield return new WaitForSeconds(nextLevelDelay);
         if (currentScene + 1 < SceneManager.sceneCountInBuildSettings)
@@ -28,7 +47,7 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(currentScene);
     }
 
-    public IEnumerator ReloadLevel()
+    IEnumerator ReloadLevel()
     {
         yield return new WaitForSeconds(restartLevelDelay);
         SceneManager.LoadScene(currentScene);

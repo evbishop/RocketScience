@@ -16,6 +16,11 @@ public class Background : MonoBehaviour
 
     void Update()
     {
+        MoveBackground();
+    }
+
+    void MoveBackground()
+    {
         material.mainTextureOffset += offSet * Time.deltaTime;
     }
 }
