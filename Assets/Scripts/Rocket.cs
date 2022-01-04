@@ -1,58 +1,36 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour
 {
-    [SerializeField] float speed = 10f, rotationSpeed = 10f, nextLevelDelay = 1f, restartLevelDelay = 2.5f;
-    [SerializeField] AudioClip mainEngineAudio, successAudio, deathAudio;
+    [SerializeField] float boostPower = 1000f, rotationSpeed = 300f;
+    [SerializeField] AudioClip successAudio, deathAudio;
     [SerializeField] ParticleSystem engineVFX, successVFX, deathVFX;
-    Rigidbody rb;
     AudioSource audioSource;
-    int currentScene;
-
-    bool isTransitioning = false;
-    bool collisionsDisabled = false;
+    Rigidbody rb;
+    GameManager gm;
+    bool inTransition;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        gm = FindObjectOfType<GameManager>();
         audioSource = GetComponent<AudioSource>();
-        audioSource.clip = mainEngineAudio;
-        audioSource.Play();
-        currentScene = SceneManager.GetActiveScene().buildIndex;
+        audioSource.volume = 0;
     }
+
     void Update()
     {
-        if (!isTransitioning)
-        {
-            Thrust();
-            Rotate();
-        }
-        if (Debug.isDebugBuild) RespondToDebugKeys();
-    }
-
-    void RespondToDebugKeys()
-    {
-        if (Input.GetKeyDown(KeyCode.L)) LoadNextLevel();
-        else if (Input.GetKeyDown(KeyCode.C)) collisionsDisabled = !collisionsDisabled;
-    }
-
-    void Thrust()
-    {
-        float deltaY = Input.GetAxis("Jump") * Time.deltaTime * speed;
-        audioSource.volume = Input.GetAxis("Jump");
-        rb.AddRelativeForce(0, deltaY, 0);
-        if (deltaY > Mathf.Epsilon) engineVFX.Play();
-        else engineVFX.Stop();
+        if (inTransition) return;
+        Thrust();
+        Rotate();
     }
 
     void Rotate()
     {
-        float deltaZ = -Input.GetAxis("Horizontal") * Time.deltaTime * rotationSpeed;
-        if (deltaZ<Mathf.Epsilon || deltaZ > Mathf.Epsilon)
+        float deltaZ = -Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+        if (deltaZ != 0)
         {
             rb.freezeRotation = true;
             transform.Rotate(new Vector3(0, 0, deltaZ));
@@ -60,15 +38,30 @@ public class Rocket : MonoBehaviour
         }
     }
 
+    void Thrust()
+    {
+        if (Input.GetKey(KeyCode.Space))
+        {
+            rb.AddRelativeForce(Vector3.up * boostPower * Time.deltaTime);
+            audioSource.volume = 1;
+            if (!engineVFX.isPlaying) engineVFX.Play();
+        }
+        else
+        {
+            audioSource.volume = 0;
+            engineVFX.Stop();
+        }
+    }
+
     void OnCollisionEnter(Collision collision)
     {
-        if (isTransitioning) return;
+        if (inTransition) return;
         switch (collision.gameObject.tag)
         {
             case "Friendly":
                 break;
             case "Finish":
-                Transcend();
+                Transition();
                 break;
             default:
                 Die();
@@ -76,38 +69,21 @@ public class Rocket : MonoBehaviour
         }
     }
 
-    private void Transcend()
+    void Transition()
     {
-        isTransitioning = true;
-        audioSource.volume = 0f;
-        AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
+        inTransition = true;
+        audioSource.volume = 0;
+        AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.3f);
         successVFX.Play();
-        Invoke(nameof(LoadNextLevel), nextLevelDelay);
+        StartCoroutine(gm.LoadNextLevel());
     }
 
     void Die()
     {
-        isTransitioning = true;
+        inTransition = true;
         audioSource.volume = 0f;
-        AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
+        AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.3f);
         deathVFX.Play();
-        Invoke(nameof(ReloadLevel), restartLevelDelay);
-    }
-
-    void LoadNextLevel()
-    {
-        if (currentScene + 1 < SceneManager.sceneCountInBuildSettings)
-            SceneManager.LoadScene(currentScene + 1);
-        else LoadLevelOne();
-    }
-
-    void LoadLevelOne()
-    {
-        SceneManager.LoadScene(0);
-    }
-
-    void ReloadLevel()
-    {
-        SceneManager.LoadScene(currentScene);
+        StartCoroutine(gm.ReloadLevel());
     }
 }

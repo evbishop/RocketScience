@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Wind : MonoBehaviour
 {
-    private void Awake()
+    void Awake()
     {
         if (FindObjectsOfType<Wind>().Length > 1) Destroy(gameObject);
         else DontDestroyOnLoad(gameObject);
