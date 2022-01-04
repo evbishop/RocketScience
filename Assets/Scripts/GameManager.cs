@@ -28,6 +28,11 @@ public class GameManager : MonoBehaviour
         Rocket.OnDeath -= HandleDeath;
     }
 
+    void Update()
+    {
+        if (Input.GetKey(KeyCode.Escape)) Application.Quit();
+    }
+
     void HandleLevelFinished()
     {
         StartCoroutine(LoadNextLevel());
