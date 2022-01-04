@@ -52,7 +52,7 @@ public class Rocket : MonoBehaviour
     void Rotate()
     {
         float deltaZ = -Input.GetAxis("Horizontal") * Time.deltaTime * rotationSpeed;
-        if (deltaZ<Mathf.Epsilon || deltaZ>Mathf.Epsilon)
+        if (deltaZ<Mathf.Epsilon || deltaZ > Mathf.Epsilon)
         {
             rb.freezeRotation = true;
             transform.Rotate(new Vector3(0, 0, deltaZ));
@@ -82,7 +82,7 @@ public class Rocket : MonoBehaviour
         audioSource.volume = 0f;
         AudioSource.PlayClipAtPoint(successAudio, Camera.main.transform.position, 0.4f);
         successVFX.Play();
-        Invoke("LoadNextScene", nextLevelDelay);
+        Invoke(nameof(LoadNextLevel), nextLevelDelay);
     }
 
     void Die()
@@ -91,7 +91,7 @@ public class Rocket : MonoBehaviour
         audioSource.volume = 0f;
         AudioSource.PlayClipAtPoint(deathAudio, Camera.main.transform.position, 0.4f);
         deathVFX.Play();
-        Invoke("ReloadScene", restartLevelDelay);
+        Invoke(nameof(ReloadLevel), restartLevelDelay);
     }
 
     void LoadNextLevel()
