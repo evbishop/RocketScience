@@ -40,7 +40,7 @@ public class GameManager : MonoBehaviour
 
     void HandleDeath()
     {
-        StopCoroutine(ReloadLevel());
+        StartCoroutine(ReloadLevel());
     }
 
     IEnumerator LoadNextLevel()
